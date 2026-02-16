@@ -13,30 +13,30 @@ game_state = {"called_numbers": [], "users": {}}
 def generate_proper_tickets(count):
     final_tickets = []
     for _ in range(count):
-        # Create a 3x9 grid
+        # 3x9 గ్రిడ్‌ను సృష్టించడం
         ticket = [[0 for _ in range(9)] for _ in range(3)]
         
-        # Track numbers assigned to each column to avoid repeats
+        # ప్రతి కాలమ్‌కు నంబర్లను కేటాయించడం (Housie Rules)
         for col in range(9):
             start = col * 10 if col > 0 else 1
             end = col * 10 + 9 if col < 8 else 90
             
-            # Pick 3 potential numbers for the column (one for each row potentially)
+            # ఒక కాలమ్‌లో 3 నంబర్లను తీసుకుని సార్ట్ చేయడం
             col_numbers = random.sample(range(start, end + 1), 3)
             col_numbers.sort()
             
-            # Randomly decide which rows in this column get a number
-            # Real Housie: Each row has 5 numbers, total 15
             for row in range(3):
                 ticket[row][col] = col_numbers[row]
 
-        # Trim each row to exactly 5 numbers
+        # ప్రతి రో (row) లో ఖచ్చితంగా 5 నంబర్లు మాత్రమే ఉండేలా మిగిలిన 4 ఖాళీ చేయడం
         for row in range(3):
             cols_to_remove = random.sample(range(9), 4)
             for c in cols_to_remove:
                 ticket[row][c] = 0
                 
-    final_tickets.append(ticket)
+        # సరిచేసిన భాగం: టిక్కెట్‌ను లిస్టులోకి చేర్చడం
+        final_tickets.append(ticket)
+        
     return final_tickets
 
 @app.route('/')
@@ -58,11 +58,16 @@ def dashboard():
 @app.route('/generate_link', methods=['POST'])
 def generate_link():
     phone = request.form.get('phone')
-    count = int(request.form.get('ticket_count', 1))
+    count_raw = request.form.get('ticket_count', 1)
+    try:
+        count = int(count_raw) if count_raw else 1
+    except:
+        count = 1
+    
     token = str(uuid.uuid4())[:8]
     game_state["users"][token] = {"tickets": generate_proper_tickets(count)}
     
-    # URL will automatically adapt to your deployed domain
+    # మీ వెబ్‌సైట్ డొమైన్‌కు తగ్గట్టుగా లింక్ మారుతుంది
     link = f"{request.host_url}ticket/{token}"
     msg = f"Your Tambola Tickets are ready! Open here: {link}"
     whatsapp_url = f"https://api.whatsapp.com/send?phone={phone}&text={urllib.parse.quote(msg)}"
@@ -88,7 +93,8 @@ def get_updates():
 @app.route('/ticket/<token>')
 def show_ticket(token):
     user_data = game_state["users"].get(token)
-    if not user_data: return "<h1>Ticket Not Found!</h1>"
+    if not user_data: 
+        return "<h1>Ticket Not Found or Expired!</h1><p>Please ask Admin for a new link.</p>"
     return render_template('user_ticket.html', tickets=user_data['tickets'])
 
 if __name__ == '__main__':
