@@ -14,6 +14,7 @@ def generate_proper_tickets(count):
     final_tickets = []
     for _ in range(count):
         ticket = [[0 for _ in range(9)] for _ in range(3)]
+        # Assign numbers to columns based on Housie rules
         for col in range(9):
             start = col * 10 if col > 0 else 1
             end = col * 10 + 9 if col < 8 else 90
@@ -21,11 +22,16 @@ def generate_proper_tickets(count):
             col_numbers.sort()
             for row in range(3):
                 ticket[row][col] = col_numbers[row]
+
+        # Ensure exactly 5 numbers per row
         for row in range(3):
-            cols_to_remove = random.sample(range(9), 4)
-            for c in cols_to_remove:
-                ticket[row][c] = 0
+            cols_to_clear = random.sample(range(9), 4)
+            for col in cols_to_clear:
+                ticket[row][col] = 0
+        
+        # This must be INSIDE the 'for _ in range(count)' loop
         final_tickets.append(ticket)
+        
     return final_tickets
 
 @app.route('/')
@@ -46,18 +52,22 @@ def dashboard():
 
 @app.route('/generate_link', methods=['POST'])
 def generate_link():
-    phone = request.form.get('phone')
-    count_raw = request.form.get('ticket_count', 1)
     try:
-        count = int(count_raw) if count_raw else 1
-    except:
-        count = 1
-    token = str(uuid.uuid4())[:8]
-    game_state["users"][token] = {"tickets": generate_proper_tickets(count)}
-    link = f"{request.host_url}ticket/{token}"
-    msg = f"Your Tambola Tickets are ready! Open here: {link}"
-    whatsapp_url = f"https://api.whatsapp.com/send?phone={phone}&text={urllib.parse.quote(msg)}"
-    return jsonify({"whatsapp_url": whatsapp_url})
+        phone = request.form.get('phone')
+        count_val = request.form.get('ticket_count')
+        count = int(count_val) if count_val else 1
+        
+        token = str(uuid.uuid4())[:8]
+        # Generate tickets and store in state
+        tickets = generate_proper_tickets(count)
+        game_state["users"][token] = {"tickets": tickets}
+        
+        link = f"{request.host_url}ticket/{token}"
+        msg = f"Your Tambola Tickets are ready! Open here: {link}"
+        whatsapp_url = f"https://api.whatsapp.com/send?phone={phone}&text={urllib.parse.quote(msg)}"
+        return jsonify({"whatsapp_url": whatsapp_url})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/call_number', methods=['POST'])
 def call_number():
@@ -70,6 +80,7 @@ def call_number():
 @app.route('/restart_game', methods=['POST'])
 def restart_game():
     game_state["called_numbers"] = []
+    game_state["users"] = {} # Clear old tickets on restart
     return jsonify({"status": "restarted"})
 
 @app.route('/get_updates')
@@ -80,7 +91,7 @@ def get_updates():
 def show_ticket(token):
     user_data = game_state["users"].get(token)
     if not user_data: 
-        return "<h1>Ticket Not Found or Expired!</h1><p>Please ask Admin for a new link.</p>"
+        return "<h1>Ticket Not Found!</h1><p>Please ask Admin for a new link.</p>"
     return render_template('user_ticket.html', tickets=user_data['tickets'])
 
 if __name__ == '__main__':
