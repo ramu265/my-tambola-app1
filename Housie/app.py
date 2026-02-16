@@ -13,30 +13,19 @@ game_state = {"called_numbers": [], "users": {}}
 def generate_proper_tickets(count):
     final_tickets = []
     for _ in range(count):
-        # 3x9 గ్రిడ్‌ను సృష్టించడం
         ticket = [[0 for _ in range(9)] for _ in range(3)]
-        
-        # ప్రతి కాలమ్‌కు నంబర్లను కేటాయించడం (Housie Rules)
         for col in range(9):
             start = col * 10 if col > 0 else 1
             end = col * 10 + 9 if col < 8 else 90
-            
-            # ఒక కాలమ్‌లో 3 నంబర్లను తీసుకుని సార్ట్ చేయడం
             col_numbers = random.sample(range(start, end + 1), 3)
             col_numbers.sort()
-            
             for row in range(3):
                 ticket[row][col] = col_numbers[row]
-
-        # ప్రతి రో (row) లో ఖచ్చితంగా 5 నంబర్లు మాత్రమే ఉండేలా మిగిలిన 4 ఖాళీ చేయడం
         for row in range(3):
             cols_to_remove = random.sample(range(9), 4)
             for c in cols_to_remove:
                 ticket[row][c] = 0
-                
-        # సరిచేసిన భాగం: టిక్కెట్‌ను లిస్టులోకి చేర్చడం
         final_tickets.append(ticket)
-        
     return final_tickets
 
 @app.route('/')
@@ -63,11 +52,8 @@ def generate_link():
         count = int(count_raw) if count_raw else 1
     except:
         count = 1
-    
     token = str(uuid.uuid4())[:8]
     game_state["users"][token] = {"tickets": generate_proper_tickets(count)}
-    
-    # మీ వెబ్‌సైట్ డొమైన్‌కు తగ్గట్టుగా లింక్ మారుతుంది
     link = f"{request.host_url}ticket/{token}"
     msg = f"Your Tambola Tickets are ready! Open here: {link}"
     whatsapp_url = f"https://api.whatsapp.com/send?phone={phone}&text={urllib.parse.quote(msg)}"
