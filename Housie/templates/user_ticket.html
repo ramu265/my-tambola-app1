@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Tambola Tickets</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 10px; }
+        .live-history { background: #fff; padding: 15px; border-bottom: 5px solid #ff4757; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .h-dot { display: inline-block; background: #ff4757; color: white; width: 35px; height: 35px; border-radius: 50%; line-height: 35px; margin: 4px; font-weight: bold; }
+        .ticket-wrapper { margin: 0 auto 30px auto; max-width: 600px; background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 5px; border: 1px solid #ccc; }
+        .ticket-header { background: #2d3436; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .edit-info { background: #ffc107; color: black; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+        td { border: 1.5px solid #333; height: 50px; font-weight: bold; font-size: 18px; cursor: pointer; user-select: none; }
+        .marked { background: #0984e3 !important; color: white !important; border-radius: 50%; }
+        .empty { background: #f9f9f9; color: #ddd; }
+        .clear-btn { background: #d63031; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="live-history">
+        <h3 style="margin:0;">Recent Numbers</h3>
+        <div id="live-h"></div>
+    </div>
+
+    {% for ticket in tickets %}
+    <div class="ticket-wrapper">
+        <div class="ticket-header">
+            <span>Ticket #{{ loop.index }}</span>
+            <span class="edit-info">DOUBLE TAP TO MARK</span>
+        </div>
+        <table>
+            {% for row in ticket %}
+            <tr>
+                {% for val in row %}
+                {% if val != 0 %}
+                <td ondblclick="toggleMark(this, '{{ loop.index0 }}-{{ loop.parent.index0 }}-{{ loop.parent.parent.index0 }}')" id="c-{{ loop.index0 }}-{{ loop.parent.index0 }}-{{ loop.parent.parent.index0 }}">
+                    {{ val }}
+                </td>
+                {% else %}
+                <td class="empty">R/V</td>
+                {% endif %}
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endfor %}
+
+    <button class="clear-btn" onclick="clearMarks()">RESET ALL MARKS</button>
+
+    <script>
+        function toggleMark(cell, id) {
+            cell.classList.toggle('marked');
+            let data = JSON.parse(localStorage.getItem('h_marks') || '{}');
+            if(cell.classList.contains('marked')) data[id] = true; else delete data[id];
+            localStorage.setItem('h_marks', JSON.stringify(data));
+        }
+        function loadMarks() {
+            let data = JSON.parse(localStorage.getItem('h_marks') || '{}');
+            for(let id in data) {
+                let cell = document.getElementById('c-' + id);
+                if(cell) cell.classList.add('marked');
+            }
+        }
+        function clearMarks() {
+            if(confirm("Clear all marks?")) { localStorage.removeItem('h_marks'); location.reload(); }
+        }
+        function fetchUpdates() {
+            fetch('/get_updates').then(res => res.json()).then(data => {
+                let html = "";
+                if(data.called) {
+                    data.called.slice().reverse().forEach(n => { html += `<span class="h-dot">${n}</span>`; });
+                    document.getElementById('live-h').innerHTML = html;
+                }
+            });
+        }
+        window.onload = () => { loadMarks(); setInterval(fetchUpdates, 3000); };
+    </script>
+</body>
+</html>

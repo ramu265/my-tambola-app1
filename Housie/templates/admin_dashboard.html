@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Housie Master Control</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial; text-align: center; background: #f4f4f4; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .num { border: 1px solid #ddd; padding: 10px; border-radius: 4px; color: #ccc; font-weight: bold; }
+        .called { background: #ff4757 !important; color: white !important; border-color: #ff4757; }
+        .display-num { font-size: 80px; color: #2f3542; margin: 10px; font-weight: bold; }
+        .history-line { background: #fff; padding: 15px; border-radius: 8px; border: 2px solid #ff4757; min-height: 40px; margin-bottom: 20px; }
+        .h-item { display: inline-block; background: #ff4757; color: white; padding: 5px 10px; margin: 3px; border-radius: 4px; font-weight: bold; }
+        .btn { padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin: 5px; color: white; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-top: 20px; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Master Console</h1>
+        
+        <div class="display-num" id="current">--</div>
+        <button onclick="nextNum()" class="btn" style="background: #ff4757;">Next Number</button>
+        <button onclick="resetGame()" class="btn" style="background: #2f3542;">Restart Game</button>
+
+        <h3>Number History</h3>
+        <div class="history-line" id="history-box"></div>
+
+        <div class="grid">
+            {% for i in range(1, 91) %}<div id="num-{{i}}" class="num">{{i}}</div>{% endfor %}
+        </div>
+
+        <div class="card">
+            <h3>Send Tickets</h3>
+            <input type="text" id="phone" placeholder="WhatsApp Number (91...)">
+            <input type="number" id="count" placeholder="Tickets (1-6)" min="1" max="6" style="width: 80px;">
+            <button onclick="send()" class="btn" style="background: #2ed573;">Send via WhatsApp</button>
+        </div>
+
+        <div class="card">
+            <h3>💰 Prize Calculator</h3>
+            <input type="number" id="totalAmount" placeholder="Enter Total Collection" oninput="calculateDividends()" style="width: 80%;">
+            <table>
+                <tr style="background: #eee;"><th>Winner Type</th><th>Amount</th></tr>
+                <tr><td>Jaldhi 5</td><td id="val1">0</td></tr>
+                <tr><td>Top Line</td><td id="val2">0</td></tr>
+                <tr><td>Middle Line</td><td id="val3">0</td></tr>
+                <tr><td>Bottom Line</td><td id="val4">0</td></tr>
+                <tr><td>Full Housie</td><td id="val5" style="font-weight:bold; color:red;">0</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function nextNum() {
+            fetch('/call_number', {method: 'POST'})
+            .then(res => res.json())
+            .then(data => {
+                if(data.number) {
+                    document.getElementById('current').innerText = data.number;
+                    document.getElementById('num-' + data.number).classList.add('called');
+                    let hBox = document.getElementById('history-box');
+                    hBox.innerHTML = `<span class="h-item">${data.number}</span> ` + hBox.innerHTML;
+                }
+            });
+        }
+
+        function send() {
+            let ph = document.getElementById('phone').value;
+            let ct = document.getElementById('count').value;
+            if(!ph || !ct) return alert("Please enter details");
+            fetch('/generate_link', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `phone=${ph}&ticket_count=${ct}`
+            })
+            .then(res => res.json())
+            .then(data => { window.open(data.whatsapp_url, '_blank'); });
+        }
+
+        function resetGame() {
+            if(confirm("Are you sure you want to reset?")) {
+                fetch('/restart_game', {method: 'POST'}).then(() => location.reload());
+            }
+        }
+
+        function calculateDividends() {
+            let total = document.getElementById('totalAmount').value;
+            let each = (total / 5).toFixed(2);
+            for(let i=1; i<=5; i++) {
+                document.getElementById('val' + i).innerText = total > 0 ? "₹ " + each : "0";
+            }
+        }
+    </script>
+</body>
+</html>

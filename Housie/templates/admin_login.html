@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Housie Admin Login</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-container {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+
+        .input-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            border-color: #ff4757;
+            outline: none;
+            box-shadow: 0 0 5px rgba(255, 71, 87, 0.2);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .login-btn:hover {
+            background-color: #e84118;
+        }
+
+        .footer-text {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>Tambola Admin Login</h2>
+        
+        <form action="/login" method="POST">
+            <div class="input-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Enter username" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter password" required>
+            </div>
+            
+            <button type="submit" class="login-btn">Login to Dashboard</button>
+        </form>
+
+        <p class="footer-text">Housie Master Control Panel © 2026</p>
+    </div>
+
+</body>
+</html>
